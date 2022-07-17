@@ -1,11 +1,20 @@
 package modulos.simulacoes;
 
+/**
+ * Classe que agrega os casos de teste para avaliar o módulo de Simulações da API de Simulação de crédito.
+ * Desse modo, ela contém todas as requições necessárias para os endpoints do módulo de simulações.
+ */
+
 import java.security.SecureRandom;
+
+import com.creditoAPI.baseAPI.BaseAPI;
+import com.creditoAPI.baseSimulacao.BaseSimulacao;
+import org.apache.http.HttpStatus;
 import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
+
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.*;
 
@@ -15,112 +24,108 @@ import com.creditoAPI.support.SimulacaoData;
 import java.util.List;
 
 @DisplayName("Testes do módulo de Simulações")
-public class SimulacoesTest {
+public class SimulacoesTest extends BaseAPI {
     SimulacaoData simulacaoDataAPI;
     SecureRandom random;
     GeraValidaCPF geradorCPF;
     JSONObject requestParams;
-
-    @BeforeAll
-    public static void setup() {
-        baseURI = "http://localhost";
-        port = 8080;
-        basePath = "/api/v1";
-    }
+    BaseSimulacao baseSimulacao;
 
     @Test
     @DisplayName("Criar simulação COM SUCESSO")
-    public void testPOSTCriarSimulacaoValida(){
+    public void testPOSTCriarSimulacaoValida() {
 
-        requestParams = new JSONObject();
         simulacaoDataAPI = new SimulacaoData();
+        baseSimulacao = new BaseSimulacao();
 
-        requestParams = simulacaoDataAPI.getValidoJSONRandomFromDataPOST();
+        baseSimulacao = simulacaoDataAPI.getValidoJSONRandomFromDataPOST();
 
-                given()
+        given()
                 .contentType("application/json")
-                .body(requestParams.toJSONString())
+                .body(baseSimulacao)
                 .when()
                 .post("/simulacoes/")
                 .then()
                 .assertThat()
-                        .statusCode(201);
+                .statusCode(HttpStatus.SC_CREATED);
     }
 
     @Test
     @DisplayName("Criar simulação SEM SUCESSO")
-    public void testPOSTCriarSimulacaoInvalida(){
+    public void testPOSTCriarSimulacaoInvalida() {
 
-        requestParams = new JSONObject();
         simulacaoDataAPI = new SimulacaoData();
+        baseSimulacao = new BaseSimulacao();
 
-        requestParams = simulacaoDataAPI.getInvalidoJSONRandomFromDataPOST();
+        baseSimulacao = simulacaoDataAPI.getInvalidoJSONRandomFromDataPOST();
 
         given()
                 .contentType("application/json")
-                .body(requestParams.toJSONString())
+                .body(baseSimulacao)
                 .when()
                 .post("/simulacoes")
                 .then()
                 .assertThat()
-                .statusCode(400);
+                .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
 
     @Test
     @DisplayName("Criar simulação com CPF DUPLICADO")
-    public void testPOSTCriarSimulacaoCPFDuplicado(){
+    public void testPOSTCriarSimulacaoCPFDuplicado() {
 
-        requestParams = new JSONObject();
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
+        baseSimulacao = new BaseSimulacao();
 
         List<String> getSetCPFCadastrado = simulacaoDataAPI.getSetCPFCadastrado();
         String cpfDuplicado = String.valueOf(getSetCPFCadastrado.get(random.nextInt(getSetCPFCadastrado.size())));
 
-        requestParams = simulacaoDataAPI.getInvalidoCPFDuplicadoJSONRandomFromDataPOST(cpfDuplicado);
+        baseSimulacao = simulacaoDataAPI.getInvalidoCPFDuplicado(cpfDuplicado);
 
         given()
                 .contentType("application/json")
-                .body(requestParams.toJSONString())
+                .body(baseSimulacao)
                 .when()
                 .post("/simulacoes/")
                 .then()
                 .assertThat()
-                .statusCode(409);
+                .statusCode(HttpStatus.SC_CONFLICT);
     }
 
     @Test
     @DisplayName("Atualizar Simulação COM SUCESSO")
-    public void testPUTAtualizarSimulacaoValida(){
+    public void testPUTAtualizarSimulacaoValida() {
 
         requestParams = new JSONObject();
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
+        baseSimulacao = new BaseSimulacao();
 
         List<String> getSetCPFCadastrado = simulacaoDataAPI.getSetCPFCadastrado();
         String cpfExistente = String.valueOf(getSetCPFCadastrado.get(random.nextInt(getSetCPFCadastrado.size())));
 
-        requestParams = simulacaoDataAPI.getValidoAtualizarSimulacaoJSONRandomFromDataPOST(cpfExistente);
+        baseSimulacao = simulacaoDataAPI.getValidoAtualizarSimulacao(cpfExistente);
 
         given()
                 .pathParam("cpf", cpfExistente)
                 .contentType("application/json")
-                .body(requestParams.toJSONString())
+                .body(baseSimulacao)
                 .when()
                 .put("/simulacoes/{cpf}")
                 .then()
                 .assertThat()
-                .statusCode(200);
+                .statusCode(HttpStatus.SC_OK);
     }
 
     @Test
     @DisplayName("Atualizar Simulação com CPF INVÁLIDO")
-    public void testPUTAtualizarSimulacaoCPFInvalido(){
+    public void testPUTAtualizarSimulacaoCPFInvalido() {
 
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
         geradorCPF = new GeraValidaCPF();
         String cpfInvalido = geradorCPF.cpf(false);
+        baseSimulacao = new BaseSimulacao();
 
         List<String> getSetCPFCadastrado = simulacaoDataAPI.getSetCPFCadastrado();
 
@@ -128,42 +133,42 @@ public class SimulacoesTest {
             cpfInvalido = geradorCPF.cpf(false);
         }
 
-        requestParams = simulacaoDataAPI.getValidoAtualizarSimulacaoJSONRandomFromDataPOST(cpfInvalido);
+        baseSimulacao = simulacaoDataAPI.getValidoAtualizarSimulacao(cpfInvalido);
 
         given()
                 .pathParam("cpf", cpfInvalido)
                 .contentType("application/json")
-                .body(requestParams.toJSONString())
+                .body(baseSimulacao)
                 .when()
                 .put("/simulacoes/{cpf}")
                 .then()
                 .assertThat()
-                .statusCode(404);
+                .statusCode(HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     @DisplayName("Retornar todas as simulações existentes COM itens cadastrados")
-    public void testGetRetornarSimulacoesComItemCadastrado(){
+    public void testGetRetornarSimulacoesComItemCadastrado() {
 
         simulacaoDataAPI = new SimulacaoData();
-        List<String[]> getSimulacoesEsperadas = simulacaoDataAPI.getSetSimulacoesCadastradas();
+        List<BaseSimulacao[]> getSimulacoesEsperadas = simulacaoDataAPI.getSetSimulacoesCadastradas();
 
         List<String[]> getSimulacoesObtidas =
                 given()
-                .when()
-                .get("/simulacoes")
-                .then()
-                .assertThat()
-                .statusCode(200)
-                .extract()
-                .response().jsonPath().getList("$");
+                        .when()
+                        .get("/simulacoes/")
+                        .then()
+                        .assertThat()
+                        .statusCode(HttpStatus.SC_OK)
+                        .extract()
+                        .response().jsonPath().getList("$");
 
         Assert.assertTrue(getSimulacoesEsperadas.containsAll(getSimulacoesObtidas));
     }
 
     @Test
     @DisplayName("Retornar simulação a partir de um CPF VÁLIDO")
-    public void testGetRetornarSimulacaoPorCPFValido(){
+    public void testGetRetornarSimulacaoPorCPFValido() {
 
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
@@ -177,13 +182,13 @@ public class SimulacoesTest {
                 .get("/simulacoes/{cpf}")
                 .then()
                 .assertThat()
-                .statusCode(200)
+                .statusCode(HttpStatus.SC_OK)
                 .body("cpf", equalTo(cpfValido));
     }
 
     @Test
     @DisplayName("Retornar simulação a partir de um CPF INVÁLIDO")
-    public void testGetRetornarSimulacaoPorCPFInvalido(){
+    public void testGetRetornarSimulacaoPorCPFInvalido() {
 
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
@@ -192,6 +197,7 @@ public class SimulacoesTest {
 
         List<String> getSetCPFCadastrado = simulacaoDataAPI.getSetCPFCadastrado();
 
+        //apenas para garantir que o CPF gerado não seja igual aos CPF já registrados
         if (getSetCPFCadastrado.contains(cpfInvalido)) {
             cpfInvalido = geradorCPF.cpf(false);
         }
@@ -202,12 +208,12 @@ public class SimulacoesTest {
                 .get("/simulacoes/{cpf}")
                 .then()
                 .assertThat()
-                .statusCode(404);
+                .statusCode(HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
     @DisplayName("Remover simulação a partir de um ID VÁLIDO")
-    public void testDeleteRemoverSimulacaoPorIDValido(){
+    public void testDeleteRemoverSimulacaoPorIDValido() {
 
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
@@ -218,15 +224,15 @@ public class SimulacoesTest {
         given()
                 .pathParam("id", idValido)
                 .when()
-                    .delete("/simulacoes/{id}")
+                .delete("/simulacoes/{id}")
                 .then()
-                    .assertThat()
-                    .statusCode(204);
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK);
     }
 
     @Test
     @DisplayName("Remover simulação a partir de um ID INVÁLIDO")
-    public void testDeleteRemoverSimulacaoPorIDInvalido(){
+    public void testDeleteRemoverSimulacaoPorIDInvalido() {
 
         simulacaoDataAPI = new SimulacaoData();
         random = new SecureRandom();
@@ -234,17 +240,17 @@ public class SimulacoesTest {
 
         Integer idInvalido = random.nextInt(100);
 
-        if (getSetIDCadastrado.contains(idInvalido)){
+        //apenas para garantir que o ID inválido gerado não seja igual aos ID já registrados
+        if (getSetIDCadastrado.contains(idInvalido)) {
             idInvalido = random.nextInt(100);
         }
 
         given()
                 .pathParam("id", idInvalido)
                 .when()
-                    .delete("/simulacoes/{id}")
+                .delete("/simulacoes/{id}")
                 .then()
                 .assertThat()
-                .statusCode(404);
+                .statusCode(HttpStatus.SC_NOT_FOUND);
     }
-
 }

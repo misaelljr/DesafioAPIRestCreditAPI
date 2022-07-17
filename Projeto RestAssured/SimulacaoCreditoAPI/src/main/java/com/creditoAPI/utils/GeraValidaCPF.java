@@ -1,5 +1,9 @@
 package com.creditoAPI.utils;
 
+/**
+ * Classe que contém métodos para criar randomicamente CPFs válidos, além de validar se um dado CPF é válido ou não.
+ */
+
 import java.util.InputMismatchException;
 
 public class GeraValidaCPF {

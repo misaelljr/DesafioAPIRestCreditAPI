@@ -1,6 +1,13 @@
 package modulos.restricoes;
 
-import org.junit.jupiter.api.BeforeAll;
+/**
+ * Classe que agrega os casos de teste para avaliar o módulo de Restrições da API de Simulação de crédito.
+ * Desse modo, ela contém todas as requições necessárias para os endpoints do módulo de Restrições.
+ * */
+
+import com.creditoAPI.baseAPI.BaseAPI;
+import com.creditoAPI.baseSimulacao.BaseSimulacao;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,16 +17,19 @@ import static org.hamcrest.Matchers.equalTo;
 import com.creditoAPI.support.RestricaoCPF;
 
 @DisplayName("Testes do módulo de Restrições")
-public class RestricoesTest {
+public class RestricoesTest extends BaseAPI {
 
     private String cpf_com_restricao;
     private String cpf_sem_restricao;
 
-    @BeforeAll
-    public static void setup() {
-        baseURI = "http://localhost";
-        port = 8080;
-        basePath = "/api/v1";
+    @Test
+    @DisplayName("Should be able to hit the health endpoint")
+    void healthCheck() {
+        when().
+                get("/health").
+                then().
+                statusCode(HttpStatus.SC_OK).
+                body("status", equalTo("UP"));
     }
 
     @Test
@@ -34,7 +44,7 @@ public class RestricoesTest {
                     .get("/restricoes/{cpf}")
                 .then()
                     .assertThat()
-                        .statusCode(200)
+                        .statusCode(HttpStatus.SC_OK)
                                 .and()
                                         .body("mensagem", equalTo("O CPF " + this.cpf_com_restricao + " tem problema"));
     }
@@ -52,6 +62,6 @@ public class RestricoesTest {
                     .get("/restricoes/{cpf}")
                 .then()
                     .assertThat()
-                        .statusCode(204);
+                        .statusCode(HttpStatus.SC_NO_CONTENT);
     }
 }
